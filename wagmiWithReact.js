@@ -1,98 +1,55 @@
 import React, { useEffect, useState } from "react";
 import { useAccount, useContract, useSigner } from "wagmi";
 import contractABI from "./contractABI.json";
-import { goerli } from "wagmi/chains";
+import { polygon } from "wagmi/chains";
 
 function CreateOrder() {
-  const [smartContractAddress, setSmartContractAddress] = useState("");
-  const [sellerAddress, setSellerAddress] = useState("");
-  const [amount, setAmount] = useState("");
-  const [date, setDate] = useState(null);
-  const [loading, setLoading] = useState(false);
+  const [utilityIdOnChain, setUtilityIdOnChain] = useState(3);
+  const [tokenIdOnChain, setTokenIdOnChain] = useState(5);
+ 
   const { isConnected, address } = useAccount();
 
   const {
     data: signer,
-  } = useSigner({ chainId: goerli.id });
+  } = useSigner({ chainId: polygon.id });
 
   const contract = useContract({
-    address: smartContractAddress,
+    address: "0xb335121a11ECB1310089425a8dB8EaF7900cb224,      //Update the contract address
     abi: contractABI,
     signerOrProvider: signer,
   });
 
   // const gasprice = signer.getGasPrice();
-  const navigate = useNavigate();
 
-  useEffect(() => {
-    // console.log(goerli.id);
-    if (!isConnected) {
-      navigate("/");
-    }
-  }, []);
 
-  // const contractRead = useContractRead({
-  //   address: '0xecb504d39723b0be0e3a9aa33d646642d1051ee1',
-  //   abi: contractABI,
-  //   functionName: 'getSleep',
-  // })
-
-  const gun = Gun({
-    peers: ["http://localhost:3500/gun"],
-    localStorage:false
-  });
-
-  const createOrder = async () => {
-    if (smartContractAddress === "") {
-      toast.error("Smart contract address cannot be empty!");
-    }
-    if (sellerAddress === "") {
-      toast.error("Seller address cannot be empty!");
-    }
-    if (amount === undefined) {
-      toast.error("Amount cannot be empty!");
-    }
-    if (date === null) {
-      toast.error("contract expiry cannot be empty!");
-    }
-    if (
-      smartContractAddress === "" ||
-      sellerAddress === "" ||
-      amount === 0 ||
-      date === null
-    ) {
-      return;
-    }
-    toast.info("Aprrove transaction in metamask");
-    const unix = Math.floor(date / 1000);
-
-    setLoading(true);
+  const redeemed = async () => {
+    console.log(`Redeeming Utility Token utilityIdOnChain: ${utilityIdOnChain} and tokenIdOnChain: ${tokenIdOnChain}`)
     const transaction = await contract
-      .Redeem(
-        String(amount * Math.pow(10, 18)),
-        sellerAddress,
-        address,
-        unix,
+      .RedeemUtility(
+        utilityIdOnChain,
+        tokenIdOnChain
         { gasLimit: 10000000, value: String(amount * Math.pow(10, 18)) }
       )
       .catch((e) => {
         console.log(e);
-        setLoading(false);
         return;
       });
 
-    console.log("Creating Contract On Blockchain");
+    console.log("Utility Token Redeemed ");
     const txn_receipt = await transaction.wait();
     console.log(txn_receipt);
+    //Proceed with the control flow, the transaction will be captured by strive and updated automaticaly 
     
     } else {
-      console.log("Something went wrong, couldn't deploy contract!");
+      console.log("Something went wrong, Couldn't redeem");
     }
 
    
   return (
     <>
-      <button>Redeem</button>
+      <button onClick=(()=>{
+        redeemed()
+      })>Redeem</button>
     </>
   );
 }
